@@ -18,10 +18,10 @@ func move_horizontal*(self: var Submarine, distance: int) =
     self.position.x += distance
     self.position.z += self.aim * distance
 
-func rise*(self: var Submarine, distance: int) {.deprecated.} =
+func rise*(self: var Submarine, distance: int) {.deprecated: "only used during part one".} =
     self.position.z += distance
 
-func dive*(self: var Submarine, distance: int) {.deprecated.} =
+func dive*(self: var Submarine, distance: int) {.deprecated: "only used during part one".} =
     self.position.z -= distance
 
 func aim_up*(self: var Submarine, distance: int) =
