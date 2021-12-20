@@ -3,6 +3,7 @@ include std/math
 include classes
 
 const INPUT_FILE = "input.txt"
+const ENABLE_PART_TWO = true
 
 ## Plan of attack:
 ## - Lazy way would be to look at every line, and then check it against all previous lines for intersections.
@@ -38,27 +39,28 @@ class VentLine:
     method isHorizontal(): bool =
         return this.y1 == this.y2
 
+    method isDiagonal(): bool =
+        let value = (this.y2 - this.y1) / (this.x2 - this.x1)
+        return value == 1 or value == -1
+
 class VentMapper:
     var map: Table[int, CountTable[int]] = Table[int, CountTable[int]()]()
     var overlapMap: Table[int, CountTable[int]] = Table[int, CountTable[int]()]()
     var overlaps: int = 0
+    var diagonalOverlaps: int = 0
 
-    method insertCoordsAndCalculateOverlaps(x: int, y: int) =
+    method insertCoordsAndCalculateOverlaps(x: int, y: int, diagonal: bool = false) =
         if (not this.map.hasKey(x)):
             this.map[x] = CountTable[int]()
 
-        let count = this.map[x][y]
-
         this.map[x].inc(y)
         
-        if (this.map[x][y] > count and count >= 1):
-            if (not this.overlapMap.hasKey(x)):
-                this.overlapMap[x] = CountTable[int]()
-
-            this.overlapMap[x].inc(y)
-
-            if (count == 1):
+        ## Make sure we're only getting the first overlap, and not double counting for future overlaps.
+        if (this.map[x][y] == 2):
+            if (not diagonal):
                 this.overlaps += 1
+            else:
+                this.diagonalOverlaps += 1
 
     method addVent*(ventLine: VentLine) =
         if (ventLine.isVertical()):
@@ -70,6 +72,21 @@ class VentMapper:
             let y = ventLine.y1
             for x in min(ventLine.x1, ventLine.x2) .. max(ventLine.x1, ventLine.x2):
                 this.insertCoordsAndCalculateOverlaps(x, y)
+        
+        if (ventLine.isDiagonal() and ENABLE_PART_TWO):
+            var xIncrement = 1
+            if (ventLine.x1 > ventLine.x2):
+                xIncrement = -1
+            
+            var yIncrement = 1
+            if (ventLine.y1 > ventLine.y2):
+                yIncrement = -1
+
+            for index in 0 .. abs(ventLine.x2 - ventLine.x1):
+                let x = ventLine.x1 + (index * xIncrement)
+                let y = ventLine.y1 + (index * yIncrement)
+
+                this.insertCoordsAndCalculateOverlaps(x, y, true)
 
 
 let ventMapper = VentMapper()
@@ -86,3 +103,5 @@ for line in lines(INPUT_FILE):
     ventMapper.addVent(ventLine)
 
 echo fmt"Part one: {ventMapper.overlaps}"
+if (ENABLE_PART_TWO):
+    echo fmt"Part two: {ventMapper.overlaps + ventMapper.diagonalOverlaps}"
